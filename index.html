@@ -1007,6 +1007,7 @@ $('#bKeys').addEventListener('click',()=>{ const p=$('#keys'); if(!p.hidden){clo
 let tt; function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),1800); }
 function changed(){ renderChips(); renderPanel(); render(); }
 $('#bPlay').onclick=togglePlay;
+$('#bLoupe').onclick=toggleLoupe;
 $('#time').addEventListener('click',()=>{
   if(VER<4||timeEditing) return; if(st.playing) pause(); timeEditing=true;
   const t=$('#time'); t.innerHTML=`<input id="tIn" class="mono" value="${st.frame}" aria-label="Кадр или таймкод мм:сс:кк" title="Номер кадра или таймкод мм:сс:кк">`;
