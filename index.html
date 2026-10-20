@@ -295,9 +295,22 @@ input,select{font:inherit;color:inherit}
 
 [data-ver="1"] .v3up,[data-ver="2"] .v3up{display:none!important}
 [data-ver="1"] .v4only,[data-ver="2"] .v4only,[data-ver="3"] .v4only,:root:not([data-ver="4"]) .rv4only{display:none!important}
-[data-ver="4"],[data-ver="5"]{--lw:196px}
+[data-ver="4"],[data-ver="5"],[data-ver="6"]{--lw:196px}
 /* V5: rows indented so object names line up with the group name */
-[data-ver="5"] .orow{padding-left:24px}
+[data-ver="5"] .orow,[data-ver="6"] .orow{padding-left:24px}
+/* V6: collapsed timeline — one thin scrub strip with playhead, progress and key marks */
+.tl.mini{--lw:0px}
+.tl.mini .lanes,.tl.mini .tl-ruler .tl-label,.tl.mini .tick span{display:none}
+.tl.mini .tl-ruler{height:20px;border-bottom:0;grid-template-columns:minmax(0,1fr)}
+.tl.mini .tick{height:3px;opacity:.6}.tl.mini .tick.big{height:6px}
+.tl.mini .track::before{content:"";position:absolute;left:0;right:0;top:50%;height:2px;margin-top:-1px;border-radius:1px;background:var(--stage-line)}
+.tl.mini .track::after{content:"";position:absolute;left:0;top:50%;height:2px;margin-top:-1px;border-radius:1px;width:calc(var(--p,0) * 100%);background:#FF5C7A;opacity:.55}
+.tl.mini .playhead b::before{top:-1px;left:-4px;border-width:5px;border-top-width:6px}
+.mks{position:absolute;inset:0;pointer-events:none;z-index:1}
+.tl:not(.mini) .mks{display:none}
+.mk{position:absolute;top:50%;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;transform:rotate(45deg);border-radius:1px}
+.mk.out{background:transparent!important;box-shadow:inset 0 0 0 1.5px currentColor}
+.mks.all .mk{opacity:.55}
 .ln{overflow:hidden;text-overflow:ellipsis}
 .la{margin-left:auto;display:flex;gap:2px}
 .la button{width:22px;height:22px;border-radius:5px;display:grid;place-items:center;color:var(--stage-muted);opacity:0}
@@ -335,7 +348,7 @@ input,select{font:inherit;color:inherit}
   .panel{max-height:none}
   .olist{max-height:none}
   :root{--lw:96px}
-  [data-ver="4"],[data-ver="5"]{--lw:150px}
+  [data-ver="4"],[data-ver="5"],[data-ver="6"]{--lw:150px}
   :root:not([data-ver="1"]) .player{grid-template-columns:1fr auto}
   :root:not([data-ver="1"]) .pl-c{grid-column:1/-1;justify-self:center;order:-1}
 }
@@ -509,6 +522,7 @@ const CLASSES_V2=[
 ].map(([id,name,color],i)=>({id,name,color,hk:i<9?String(i+1):''}));
 let CLASSES=CLASSES_V2;
 const VERSIONS=[
+  {v:6,date:'20.10',title:'Свёрнутый таймлайн',notes:['Кнопка таймлайна сворачивает треки в тонкую полосу, а не прячет его','В полосе: перемотка, пройденная часть, ключи выбранного объекта (или всех, если ничего не выбрано)']},
   {v:5,date:'20.10',title:'Слои без проверки',notes:['Новый объект — верхней строкой на таймлайне и первым в своей группе','Проверка треков убрана: это задача верификатора','Объекты в группе выровнены по названию группы']},
   {v:4,date:'20.10',title:'Скорость и проверка',notes:['Тип новой рамки виден у курсора, перекрестие в цвете класса','Лупа при рисовании и правке рамки (L)','Проверка треков: принять, отклонить, следующий непроверенный','Клик по таймкоду — переход к кадру','Глаз и замок — у названия трека на таймлайне, глаз у группы — фильтр класса']},
   {v:3,date:'20.10',title:'Тип над кадром',notes:['Как V2, но «Новая рамка» — в строке над видео, а не в углу кадра','Кадр полностью свободен под разметку']},
@@ -936,9 +950,10 @@ const pct=f=>st.total>1?f/(st.total-1)*100:0;
 function renderRuler(){
   const secs=(st.total-1)/st.fps; const steps=[1,2,5,10,15,30,60,120,300]; const step=steps.find(s=>secs/s<=12)||600;
   let h=''; for(let s=0;s<=secs;s+=step){ h+=`<div class="tick big" style="left:${pct(s*st.fps)}%"><span>${s<60?s+'с':Math.floor(s/60)+'м'+(s%60?pad(s%60):'')}</span></div>`; for(let q=1;q<5;q++){ const f=(s+step*q/5)*st.fps; if(f<st.total) h+=`<div class="tick" style="left:${pct(f)}%"></div>`; } }
-  $('#ruler').innerHTML=h;
+  $('#ruler').innerHTML=h+'<div class="mks" id="mks"></div>'; renderMini();
 }
 function renderLanes(){
+  renderMini();
   const L=$('#lanes');
   if(!st.objects.length){ L.innerHTML=`<div class="lane-empty">Треки объектов появятся здесь</div>`; updPlayhead(); return; }
   L.innerHTML=(VER>=5?[...st.objects].reverse():st.objects).map(o=>{
@@ -950,7 +965,13 @@ function renderLanes(){
   }).join('');
   updPlayhead();
 }
-function updPlayhead(){ $('#ph').style.setProperty('--p',pct(st.frame)/100); }
+function updPlayhead(){ $('#tl').style.setProperty('--p',pct(st.frame)/100); }
+function renderMini(){
+  const m=$('#mks'); if(!m) return; if(VER<6){ m.innerHTML=''; return; }
+  const o=selObj(), list=o?[o]:st.objects.filter(x=>!x.hidden);
+  m.classList.toggle('all',!o);
+  m.innerHTML=list.map(x=>{ const c=cls(x.cls).color; return x.keys.map(k=>`<i class="mk ${k.out?'out':''}" style="left:${pct(k.f)}%;background:${c};color:${c}"></i>`).join(''); }).join('');
+}
 let scrub=null;
 $('#tl').addEventListener('pointerdown',e=>{
   const act=e.target.closest('.lane [data-act]'); if(act){ const o=st.objects.find(x=>x.id==act.closest('.lane').dataset.id); if(act.dataset.act==='eye') o.hidden=!o.hidden; else o.locked=!o.locked; changed(); return; }
@@ -1027,7 +1048,8 @@ $('#bUndo').onclick=doUndo; $('#bRedo').onclick=doRedo;
 function setSpeed(v){ st.speed=v; $('#speed').value=String(v); if(st.source==='video') vid.playbackRate=v; }
 $('#speed').onchange=e=>setSpeed(+e.target.value);
 $('#fIn').addEventListener('change',e=>{ const v=parseInt(e.target.value); if(!isNaN(v)){ if(st.playing)pause(); setFrame(v);} e.target.blur(); });
-$('#bTl').onclick=()=>{ st.showTl=!st.showTl; $('#tl').hidden=!st.showTl; $('#bTl').classList.toggle('on',st.showTl); };
+$('#bTl').onclick=()=>{ st.showTl=!st.showTl; applyTl(); };
+function applyTl(){ const mini=VER>=6&&!st.showTl; $('#tl').classList.toggle('mini',mini); $('#tl').hidden=!st.showTl&&!mini; $('#bTl').classList.toggle('on',st.showTl); $('#bTl').title=VER>=6?(st.showTl?'Свернуть таймлайн':'Развернуть таймлайн'):'Таймлайн треков'; renderMini(); }
 $('#bUpload').onclick=()=>$('#file').click();
 $('#file').addEventListener('change',e=>{
   const f=e.target.files[0]; if(!f) return; pause();
@@ -1049,6 +1071,7 @@ function setVersion(v){
   try{ history.replaceState(null,'','#v'+v); }catch(e){}
   $('#hkDigits').innerHTML=v===1?'<span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span>':'<span class="kbd">1</span>–<span class="kbd">9</span>';
   $('#time').classList.toggle('timebtn',v>=4); $('#time').title=v>=4?'Перейти к кадру или таймкоду':''; $('#bLoupe').classList.toggle('on',S.loupe);
+  st.showTl=true; applyTl();
   closePops(); lastOvl=''; renderVers(); resetDemo(96);
 }
 function exportJSON(){
