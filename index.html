@@ -294,8 +294,10 @@ input,select{font:inherit;color:inherit}
 .speedseg button.on{background:var(--ink);color:var(--ink-fg);border-color:var(--ink)}
 
 [data-ver="1"] .v3up,[data-ver="2"] .v3up{display:none!important}
-:root:not([data-ver="4"]) .v4only{display:none!important}
-[data-ver="4"]{--lw:196px}
+[data-ver="1"] .v4only,[data-ver="2"] .v4only,[data-ver="3"] .v4only,:root:not([data-ver="4"]) .rv4only{display:none!important}
+[data-ver="4"],[data-ver="5"]{--lw:196px}
+/* V5: rows indented so object names line up with the group name */
+[data-ver="5"] .orow{padding-left:24px}
 .ln{overflow:hidden;text-overflow:ellipsis}
 .la{margin-left:auto;display:flex;gap:2px}
 .la button{width:22px;height:22px;border-radius:5px;display:grid;place-items:center;color:var(--stage-muted);opacity:0}
@@ -333,7 +335,7 @@ input,select{font:inherit;color:inherit}
   .panel{max-height:none}
   .olist{max-height:none}
   :root{--lw:96px}
-  [data-ver="4"]{--lw:150px}
+  [data-ver="4"],[data-ver="5"]{--lw:150px}
   :root:not([data-ver="1"]) .player{grid-template-columns:1fr auto}
   :root:not([data-ver="1"]) .pl-c{grid-column:1/-1;justify-self:center;order:-1}
 }
@@ -438,9 +440,9 @@ input,select{font:inherit;color:inherit}
     <dt><span class="kbd">K</span></dt><dd>Поставить / снять ключ на кадре</dd>
     <dt><span class="kbd">H</span></dt><dd>Объект вне кадра с этого кадра / вернуть</dd>
     <dt id="hkDigits"><span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span></dt><dd>Тип объекта для новой рамки</dd>
-    <dt class="v4only"><span class="kbd">A</span></dt><dd class="v4only">Принять трек и перейти к следующему</dd>
-    <dt class="v4only"><span class="kbd">X</span></dt><dd class="v4only">Отклонить трек</dd>
-    <dt class="v4only"><span class="kbd">N</span></dt><dd class="v4only">Следующий непроверенный трек</dd>
+    <dt class="rv4only"><span class="kbd">A</span></dt><dd class="rv4only">Принять трек и перейти к следующему</dd>
+    <dt class="rv4only"><span class="kbd">X</span></dt><dd class="rv4only">Отклонить трек</dd>
+    <dt class="rv4only"><span class="kbd">N</span></dt><dd class="rv4only">Следующий непроверенный трек</dd>
     <dt class="v4only"><span class="kbd">L</span></dt><dd class="v4only">Лупа вкл / выкл</dd>
     <dt class="v4only"><span class="kbd">клик</span></dt><dd class="v4only">По таймкоду — перейти к кадру или времени</dd>
     <dt><span class="kbd">Tab</span></dt><dd>Следующий объект на кадре</dd>
@@ -507,6 +509,7 @@ const CLASSES_V2=[
 ].map(([id,name,color],i)=>({id,name,color,hk:i<9?String(i+1):''}));
 let CLASSES=CLASSES_V2;
 const VERSIONS=[
+  {v:5,date:'20.10',title:'Слои без проверки',notes:['Новый объект — верхней строкой на таймлайне и первым в своей группе','Проверка треков убрана: это задача верификатора','Объекты в группе выровнены по названию группы']},
   {v:4,date:'20.10',title:'Скорость и проверка',notes:['Тип новой рамки виден у курсора, перекрестие в цвете класса','Лупа при рисовании и правке рамки (L)','Проверка треков: принять, отклонить, следующий непроверенный','Клик по таймкоду — переход к кадру','Глаз и замок — у названия трека на таймлайне, глаз у группы — фильтр класса']},
   {v:3,date:'20.10',title:'Тип над кадром',notes:['Как V2, но «Новая рамка» — в строке над видео, а не в углу кадра','Кадр полностью свободен под разметку']},
   {v:2,date:'20.10',title:'Пульт и типы',notes:['Тип новой рамки — список с поиском прямо на кадре','Объекты: сворачиваемые группы и поиск','Без координат рамки и подсказок','Плеер: время слева, управление по центру, скорость в настройках']},
@@ -621,7 +624,7 @@ function seedDemo(){
   newObject('car',[...keysFrom(carA,[6,72,140,200]),{f:outF,...clip(carA(outF-1)),out:true}]);
   newObject('person',keysFrom(person,[22,210]));
   if(VER>=2) for(let x=40;x<1280;x+=170) newObject('tree',[{f:0,...clip({x:x-50,y:8,w:100,h:100}),out:false}]);
-  if(VER>=4) st.objects.filter(o=>o.cls==='tree').forEach(o=>o.review='ok');
+  if(VER===4) st.objects.filter(o=>o.cls==='tree').forEach(o=>o.review='ok');
   st.sel=1; st.active='car';
 }
 
@@ -728,7 +731,7 @@ cv.addEventListener('pointerup',()=>{
   if(!drag) return; const d=drag; drag=null;
   if(d.type==='draw'){
     const r=normRect(d);
-    if(r.w>=6*px&&r.h>=6*px){ pushUndo(); const o=newObject(st.active,[{f:st.frame,...r,out:false}]); st.sel=o.id; changed(); toast(`Создан «${name(o)}» · ключ на кадре ${st.frame}`); }
+    if(r.w>=6*px&&r.h>=6*px){ pushUndo(); const o=newObject(st.active,[{f:st.frame,...r,out:false}]); st.sel=o.id; changed(); if(VER>=5) $('#lanes').scrollTop=0; toast(`Создан «${name(o)}» · ключ на кадре ${st.frame}`); }
     else if(st.sel){ st.sel=null; changed(); }
     else render();
   } else if(d.armed){ changed(); } else render();
@@ -842,13 +845,13 @@ function openPicker(anchor){
 /* ───────────────────────── UI: panel ───────────────────────── */
 const ST_LABEL={key:['key','◆ ключ'],interp:['interp','интерп.'],out:['out','вне кадра'],outkey:['out','◇ вне'],none:['none','—']};
 function renderPanel(){
-  $('#objCount').textContent=VER>=4?`${st.objects.length} · не проверено ${st.objects.filter(o=>o.review!=='ok').length}`:st.objects.length;
+  $('#objCount').textContent=VER===4?`${st.objects.length} · не проверено ${st.objects.filter(o=>o.review!=='ok').length}`:st.objects.length;
   const L=$('#olist');
   const v2=VER>=2, q=v2?oq.trim().toLowerCase():'';
   $('#osearchWrap').hidden=!(v2&&st.objects.length>6);
   if(!st.objects.length){ L.innerHTML=`<div class="empty">Объектов пока нет. ${VER===2?'Выберите тип в «Новая рамка» на кадре':VER>=3?'Выберите тип в «Новая рамка» над видео':'Выберите тип сверху'} и обведите объект — появится трек с первым ключом.</div>`; }
   else { L.innerHTML=CLASSES.map(c=>{
-    const os=st.objects.filter(o=>o.cls===c.id&&(!q||name(o).toLowerCase().includes(q))); if(!os.length) return '';
+    const os=st.objects.filter(o=>o.cls===c.id&&(!q||name(o).toLowerCase().includes(q))); if(!os.length) return ''; if(VER>=5) os.reverse();
     if(v2){
       const col=collapsed.has(c.id)&&!q&&!os.some(o=>o.id===st.sel);
       const head=`<div class="grp ${col?'col':''}" data-g="${c.id}" role="button" aria-expanded="${!col}"><span class="chv">${ic('chev',12).replace('<svg','<svg style="transform:rotate(90deg)"')}</span><i style="background:${c.color}"></i>${c.name}<span class="mono" style="font-weight:500">${os.length}</span><span class="sp"></span>${VER>=4?(()=>{ const all=st.objects.filter(o=>o.cls===c.id), off=all.every(o=>o.hidden); return `<button class="geye ${off?'off':''}" data-ge="${c.id}" title="${off?'Показать':'Скрыть'} все «${c.name}» на кадре и таймлайне">${ic(off?'eyeOff':'eye',14)}</button>`; })():''}${st.active===c.id?'<span class="drw">рисую</span>':`<button class="add" data-c="${c.id}" title="Рисовать новую рамку этого типа">${ic('plus',14)}</button>`}</div>`;
@@ -860,7 +863,7 @@ function renderPanel(){
   }).join('') || `<div class="empty">Ничего не нашлось по «${oq.replace(/</g,'&lt;')}»</div>`; }
   function rowHtml(o){ const c=cls(o.cls); const [k,l]=ST_LABEL[status(o)];
     if(VER>=4){ const rv=o.review;
-      return `<div class="orow ${st.sel===o.id?'sel':''} ${o.hidden?'off':''}" data-id="${o.id}"><span class="sw" style="background:${c.color}"></span><span class="nm">${name(o)}</span>${o.locked?`<span class="oflag" title="Заблокирован">${ic('lock',13)}</span>`:''}${o.hidden?`<span class="oflag" title="Скрыт">${ic('eyeOff',13)}</span>`:''}<span class="st ${k}">${l}</span><span class="rv ${rv||'todo'}" title="${rv==='ok'?'Принят':rv==='bad'?'Отклонён':'Не проверен'}">${rv==='ok'?ic('check',11):rv==='bad'?ic('x',11):''}</span></div>`; }
+      return `<div class="orow ${st.sel===o.id?'sel':''} ${o.hidden?'off':''}" data-id="${o.id}"><span class="sw" style="background:${c.color}"></span><span class="nm">${name(o)}</span>${o.locked?`<span class="oflag" title="Заблокирован">${ic('lock',13)}</span>`:''}${o.hidden?`<span class="oflag" title="Скрыт">${ic('eyeOff',13)}</span>`:''}<span class="st ${k}">${l}</span>${VER===4?`<span class="rv ${rv||'todo'}" title="${rv==='ok'?'Принят':rv==='bad'?'Отклонён':'Не проверен'}">${rv==='ok'?ic('check',11):rv==='bad'?ic('x',11):''}</span>`:''}</div>`; }
         return `<div class="orow ${st.sel===o.id?'sel':''} ${o.hidden?'off':''}" data-id="${o.id}">
           <span class="sw" style="background:${c.color}"></span><span class="nm">${name(o)}</span>
           <span class="st ${k}">${l}</span>
@@ -885,7 +888,7 @@ function renderPanel(){
     </div>
     <div class="sec-l">Ключевые кадры<span class="count">${o.keys.length}</span><span class="sp"></span><span style="text-transform:none;letter-spacing:0;font-weight:500" class="mono">кадр ${st.frame}</span></div>
     <div class="kfs" style="--c:${c.color}">${o.keys.map(k=>`<span class="kf ${k.f===st.frame?'cur':''} ${k.out?'out':''}"><button class="go" data-f="${k.f}" title="${k.out?'Вне кадра с ':'Перейти к '}${k.f}">${k.f}</button><button class="mm" data-m="${k.f}" aria-label="Действия с ключом ${k.f}">${ic('more',12)}</button></span>`).join('')}</div>
-    ${VER>=4?`<div class="sec-l">Проверка трека</div><div class="review"><button id="rOk" class="ok ${o.review==='ok'?'on':''}" title="Принять трек (A — принять и к следующему)">${ic('check',14)}Принять</button><button id="rBad" class="bad ${o.review==='bad'?'on':''}" title="Отклонить трек (X)">${ic('x',14)}Отклонить</button><button id="rNext" title="Следующий непроверенный (N)">${ic('keyNext',14)}</button></div>`:''}
+    ${VER===4?`<div class="sec-l">Проверка трека</div><div class="review"><button id="rOk" class="ok ${o.review==='ok'?'on':''}" title="Принять трек (A — принять и к следующему)">${ic('check',14)}Принять</button><button id="rBad" class="bad ${o.review==='bad'?'on':''}" title="Отклонить трек (X)">${ic('x',14)}Отклонить</button><button id="rNext" title="Следующий непроверенный (N)">${ic('keyNext',14)}</button></div>`:''}
     ${VER===1?`<div class="sec-l">Рамка на кадре<span class="sp"></span><span style="text-transform:none;letter-spacing:0;font-weight:500">${{key:'задана вручную',interp:'интерполирована',out:'объект вне кадра',outkey:'объект вне кадра',none:'объект ещё не появился'}[s]}</span></div>
     <div class="coords">${['x','y','w','h'].map(a=>`<label>${a.toUpperCase()}<input id="c${a}" class="mono" inputmode="numeric" ${(!b||b.out||o.locked)?'disabled':''}></label>`).join('')}</div>
     <div class="note">${s==='interp'?'Рамка посчитана между соседними ключами. Если она отстала от объекта — подвиньте её, и здесь появится ключ.':s==='key'?'Изменения рамки сохраняются в этот ключ.':isOut?'Объект скрыт до следующего видимого ключа. «Вернуть» — показать его снова с этого кадра.':'Первый ключ объекта на кадре '+o.keys[0].f+'.'}${o.locked?' <b>Объект заблокирован.</b>':''}</div>`:''}`;
@@ -938,7 +941,7 @@ function renderRuler(){
 function renderLanes(){
   const L=$('#lanes');
   if(!st.objects.length){ L.innerHTML=`<div class="lane-empty">Треки объектов появятся здесь</div>`; updPlayhead(); return; }
-  L.innerHTML=st.objects.map(o=>{
+  L.innerHTML=(VER>=5?[...st.objects].reverse():st.objects).map(o=>{
     const c=cls(o.cls).color; let segs='';
     o.keys.forEach((k,i)=>{ if(k.out) return; const n=o.keys[i+1]; const end=n?n.f:st.total-1; const hold=!n||n.out;
       segs+=`<div class="seg ${hold?'hold':''}" style="left:${pct(k.f)}%;width:${pct(end)-pct(k.f)}%;background:${c}"></div>`; });
@@ -1050,7 +1053,7 @@ function setVersion(v){
 function exportJSON(){
   return JSON.stringify({video:{source:st.source==='demo'?'demo-cam03':'upload',frames:st.total,fps:st.fps,width:W,height:H},
     labels:CLASSES.map(c=>({id:c.id,name:c.name,color:c.color})),
-    tracks:st.objects.map(o=>({id:o.id,label:o.cls,name:name(o),...(VER>=4?{review:o.review||null}:{}),keyframes:o.keys.map(k=>({frame:k.f,bbox:[k.x,k.y,k.w,k.h].map(Math.round),outside:k.out}))}))},null,2);
+    tracks:st.objects.map(o=>({id:o.id,label:o.cls,name:name(o),...(VER===4?{review:o.review||null}:{}),keyframes:o.keys.map(k=>({frame:k.f,bbox:[k.x,k.y,k.w,k.h].map(Math.round),outside:k.out}))}))},null,2);
 }
 $('#btnJson').onclick=()=>{
   const bgd=document.createElement('div'); bgd.className='modal-bg';
@@ -1074,9 +1077,9 @@ document.addEventListener('keydown',e=>{
   else if(k==='e'||k==='E'||k==='у'||k==='У') jumpKey(1);
   else if((k==='k'||k==='K'||k==='л'||k==='Л')&&o) toggleKey(o);
   else if((k==='h'||k==='H'||k==='р'||k==='Р')&&o) toggleOut(o);
-  else if((k==='a'||k==='A'||k==='ф'||k==='Ф')&&o&&VER>=4){ if(o.review!=='ok'){ pushUndo(); o.review='ok'; toast(`«${name(o)}» принят`); } nextUnreviewed(); }
-  else if((k==='x'||k==='X'||k==='ч'||k==='Ч')&&o&&VER>=4) setReview(o,'bad');
-  else if((k==='n'||k==='N'||k==='т'||k==='Т')&&VER>=4) nextUnreviewed();
+  else if((k==='a'||k==='A'||k==='ф'||k==='Ф')&&o&&VER===4){ if(o.review!=='ok'){ pushUndo(); o.review='ok'; toast(`«${name(o)}» принят`); } nextUnreviewed(); }
+  else if((k==='x'||k==='X'||k==='ч'||k==='Ч')&&o&&VER===4) setReview(o,'bad');
+  else if((k==='n'||k==='N'||k==='т'||k==='Т')&&VER===4) nextUnreviewed();
   else if((k==='l'||k==='L'||k==='д'||k==='Д')&&VER>=4) toggleLoupe();
   else if(/^[1-9]$/.test(k)&&+k<=CLASSES.length) setActive(CLASSES[+k-1].id);
   else if((k==='Delete'||k==='Backspace')&&o){ e.preventDefault(); deleteObj(o); }
