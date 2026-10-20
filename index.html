@@ -293,6 +293,32 @@ input,select{font:inherit;color:inherit}
 .speedseg button{height:28px;border-radius:6px;border:1px solid var(--line-2);font-family:var(--f-mono);font-size:11px;font-weight:500}
 .speedseg button.on{background:var(--ink);color:var(--ink-fg);border-color:var(--ink)}
 
+[data-ver="1"] .v3up,[data-ver="2"] .v3up{display:none!important}
+:root:not([data-ver="4"]) .v4only{display:none!important}
+[data-ver="4"]{--lw:196px}
+.ln{overflow:hidden;text-overflow:ellipsis}
+.la{margin-left:auto;display:flex;gap:2px}
+.la button{width:22px;height:22px;border-radius:5px;display:grid;place-items:center;color:var(--stage-muted);opacity:0}
+.lane:hover .la button,.la button.on,.la button:focus-visible{opacity:1}
+.la button:hover{background:rgba(255,255,255,.08);color:var(--stage-fg)}
+.la button.on{color:#FFB547}
+.rv{width:16px;height:16px;border-radius:50%;display:grid;place-items:center;flex:none}
+.rv.ok{background:var(--ok);color:#fff}
+.rv.bad{background:var(--danger);color:#fff}
+.rv.todo{box-shadow:inset 0 0 0 1.5px var(--line-2)}
+.oflag{display:grid;color:var(--faint)}
+.review{display:grid;grid-template-columns:1fr 1fr 34px;gap:6px}
+.review button{height:30px;border-radius:7px;border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:600;background:var(--surface)}
+.review button:hover{background:var(--surface-2)}
+.review button.ok.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.review button.bad.on{background:var(--danger);border-color:var(--danger);color:#fff}
+.grp .geye{width:22px;height:22px;border-radius:5px;display:grid;place-items:center;color:var(--muted)}
+.grp .geye:hover{background:var(--line);color:var(--fg)}
+.grp .geye.off{color:var(--faint)}
+.loupe{position:absolute;left:0;top:0;width:168px;height:168px;border-radius:50%;border:2px solid rgba(255,255,255,.9);box-shadow:0 8px 24px rgba(0,0,0,.5);pointer-events:none;background:#000;z-index:2}
+.time.timebtn{cursor:pointer;border-radius:6px;padding:4px 6px}
+.time.timebtn:hover{background:rgba(255,255,255,.07)}
+.time input{width:84px;height:26px;border-radius:6px;border:1px solid #8590FF;background:var(--stage);color:var(--stage-fg);font-family:var(--f-mono);font-size:12px;text-align:center}
 @media (max-width:1180px){ .vers .vh,.ver ul,.ver .vn,.ver small{display:none} .ver .vt{justify-content:center} }
 @media (max-width:1180px){ .app{grid-template-columns:64px minmax(0,1fr)} .side .t,.side .chev,.user div,.logo span{display:none} .nav{justify-content:center} .work{grid-template-columns:minmax(0,1fr) 290px} .rail{display:none} .work{padding-right:12px} }
 @media (max-width:860px){
@@ -307,6 +333,7 @@ input,select{font:inherit;color:inherit}
   .panel{max-height:none}
   .olist{max-height:none}
   :root{--lw:96px}
+  [data-ver="4"]{--lw:150px}
   :root:not([data-ver="1"]) .player{grid-template-columns:1fr auto}
   :root:not([data-ver="1"]) .pl-c{grid-column:1/-1;justify-self:center;order:-1}
 }
@@ -341,11 +368,12 @@ input,select{font:inherit;color:inherit}
     <div class="work">
       <section class="stage" aria-label="Рабочая область разметки">
         <div class="classbar v1only" id="classbar"></div>
-        <div class="v3bar v3only" id="v3bar"></div>
+        <div class="v3bar v3up" id="v3bar"></div>
         <div class="viewer">
           <div class="viewport" id="viewport">
             <canvas id="cv" aria-label="Кадр видео с разметкой"></canvas>
             <div class="ovl" id="ovl"></div>
+            <canvas class="loupe" id="loupe" hidden></canvas>
           </div>
           <div class="player">
             <div class="pl-c">
@@ -366,6 +394,7 @@ input,select{font:inherit;color:inherit}
               <span class="sep"></span>
               <button class="pb on" id="bTl" title="Таймлайн треков"><span data-ic="timeline"></span></button>
               <button class="pb v1only" id="bUpload" title="Загрузить своё видео"><span data-ic="upload"></span></button>
+              <button class="pb v4only on" id="bLoupe" title="Лупа (L)"><span data-ic="search"></span></button>
               <button class="pb" id="bSet" title="Настройки видео и разметки"><span data-ic="sliders"></span></button>
             </div>
             <input type="file" id="file" accept="video/*" hidden>
@@ -409,6 +438,11 @@ input,select{font:inherit;color:inherit}
     <dt><span class="kbd">K</span></dt><dd>Поставить / снять ключ на кадре</dd>
     <dt><span class="kbd">H</span></dt><dd>Объект вне кадра с этого кадра / вернуть</dd>
     <dt id="hkDigits"><span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span></dt><dd>Тип объекта для новой рамки</dd>
+    <dt class="v4only"><span class="kbd">A</span></dt><dd class="v4only">Принять трек и перейти к следующему</dd>
+    <dt class="v4only"><span class="kbd">X</span></dt><dd class="v4only">Отклонить трек</dd>
+    <dt class="v4only"><span class="kbd">N</span></dt><dd class="v4only">Следующий непроверенный трек</dd>
+    <dt class="v4only"><span class="kbd">L</span></dt><dd class="v4only">Лупа вкл / выкл</dd>
+    <dt class="v4only"><span class="kbd">клик</span></dt><dd class="v4only">По таймкоду — перейти к кадру или времени</dd>
     <dt><span class="kbd">Tab</span></dt><dd>Следующий объект на кадре</dd>
     <dt><span class="kbd">Del</span></dt><dd>Удалить выбранный объект</dd>
     <dt><span class="kbd">Esc</span></dt><dd>Снять выделение</dd>
@@ -473,6 +507,7 @@ const CLASSES_V2=[
 ].map(([id,name,color],i)=>({id,name,color,hk:i<9?String(i+1):''}));
 let CLASSES=CLASSES_V2;
 const VERSIONS=[
+  {v:4,date:'20.10',title:'Скорость и проверка',notes:['Тип новой рамки виден у курсора, перекрестие в цвете класса','Лупа при рисовании и правке рамки (L)','Проверка треков: принять, отклонить, следующий непроверенный','Клик по таймкоду — переход к кадру','Глаз и замок — у названия трека на таймлайне, глаз у группы — фильтр класса']},
   {v:3,date:'20.10',title:'Тип над кадром',notes:['Как V2, но «Новая рамка» — в строке над видео, а не в углу кадра','Кадр полностью свободен под разметку']},
   {v:2,date:'20.10',title:'Пульт и типы',notes:['Тип новой рамки — список с поиском прямо на кадре','Объекты: сворачиваемые группы и поиск','Без координат рамки и подсказок','Плеер: время слева, управление по центру, скорость в настройках']},
   {v:1,date:'20.10',title:'Базовая разметка',notes:['Чипсы типов над кадром','Треки, ключи, интерполяция, «вне кадра»','Таймлайн треков, координаты рамки']},
@@ -481,7 +516,7 @@ let VER=2;
 const collapsed=new Set();
 let oq='';
 const cls=id=>CLASSES.find(c=>c.id===id);
-const DEF_SETTINGS={stroke:2,fill:16,labelSize:12,labels:true,cross:true,dash:true,brightness:100,contrast:100};
+const DEF_SETTINGS={loupe:true,loupeEdit:true,loupeZoom:3,stroke:2,fill:16,labelSize:12,labels:true,cross:true,dash:true,brightness:100,contrast:100};
 const S={...DEF_SETTINGS};
 const st={frame:0,total:300,fps:25,playing:false,speed:1,active:'car',sel:null,objects:[],counters:{},nextId:1,source:'demo',showTl:true};
 let W=1280,H=720;
@@ -586,6 +621,7 @@ function seedDemo(){
   newObject('car',[...keysFrom(carA,[6,72,140,200]),{f:outF,...clip(carA(outF-1)),out:true}]);
   newObject('person',keysFrom(person,[22,210]));
   if(VER>=2) for(let x=40;x<1280;x+=170) newObject('tree',[{f:0,...clip({x:x-50,y:8,w:100,h:100}),out:false}]);
+  if(VER>=4) st.objects.filter(o=>o.cls==='tree').forEach(o=>o.review='ok');
   st.sel=1; st.active='car';
 }
 
@@ -611,7 +647,11 @@ function render(){
   for(const o of st.objects){ if(o.hidden||o===sel) continue; const b=visBox(o); if(b) drawBox(o,b,false); }
   if(sel&&!sel.hidden){ const b=visBox(sel); if(b) drawBox(sel,b,true); }
   if(drag&&drag.type==='draw'){ const r=normRect(drag); const c=cls(st.active).color; ctx.setLineDash([6*px,4*px]); ctx.lineWidth=S.stroke*px; ctx.strokeStyle=c; ctx.fillStyle=hexA(c,S.fill/100); ctx.fillRect(r.x,r.y,r.w,r.h); ctx.strokeRect(r.x,r.y,r.w,r.h); ctx.setLineDash([]); }
-  if(S.cross&&mouse&&(!drag||drag.type==='draw')&&!hoverTarget){ ctx.strokeStyle='rgba(255,255,255,.45)'; ctx.lineWidth=px; ctx.setLineDash([4*px,4*px]); ctx.beginPath(); ctx.moveTo(0,mouse.y); ctx.lineTo(W,mouse.y); ctx.moveTo(mouse.x,0); ctx.lineTo(mouse.x,H); ctx.stroke(); ctx.setLineDash([]); }
+  updLoupe();
+  const free=mouse&&(!drag||drag.type==='draw')&&!hoverTarget, ac=cls(st.active).color;
+  if(S.cross&&free&&VER>=4){ ctx.strokeStyle=hexA(ac,.7); ctx.lineWidth=px; ctx.setLineDash([4*px,4*px]); ctx.beginPath(); ctx.moveTo(0,mouse.y); ctx.lineTo(W,mouse.y); ctx.moveTo(mouse.x,0); ctx.lineTo(mouse.x,H); ctx.stroke(); ctx.setLineDash([]); }
+  if(free&&VER>=4){ const fs=11*px, t=cls(st.active).name; ctx.font=`700 ${fs}px Manrope, sans-serif`; const tw=ctx.measureText(t).width+fs*1.2, lh=fs*1.8; let tx=mouse.x+12*px, ty=mouse.y+12*px; if(tx+tw>W) tx=mouse.x-12*px-tw; if(ty+lh>H) ty=mouse.y-12*px-lh; ctx.fillStyle=ac; ctx.fillRect(tx,ty,tw,lh); ctx.fillStyle='#14151b'; ctx.textBaseline='middle'; ctx.fillText(t,tx+fs*.6,ty+lh/2+px); }
+  if(S.cross&&free&&VER<4){ ctx.strokeStyle='rgba(255,255,255,.45)'; ctx.lineWidth=px; ctx.setLineDash([4*px,4*px]); ctx.beginPath(); ctx.moveTo(0,mouse.y); ctx.lineTo(W,mouse.y); ctx.moveTo(mouse.x,0); ctx.lineTo(mouse.x,H); ctx.stroke(); ctx.setLineDash([]); }
   renderOvl();
 }
 function drawBox(o,b,sel){
@@ -626,6 +666,21 @@ function drawBox(o,b,sel){
   }
   if(sel&&!o.locked){ const hs=4.5*px; for(const [hx,hy] of handles(b)){ ctx.fillStyle='#fff'; ctx.fillRect(hx-hs,hy-hs,hs*2,hs*2); ctx.lineWidth=1.5*px; ctx.strokeStyle=c; ctx.strokeRect(hx-hs,hy-hs,hs*2,hs*2);} }
 }
+let mouseCss=null;
+function updLoupe(){
+  const lp=$('#loupe'), show=VER>=4&&S.loupe&&mouse&&mouseCss&&(!S.loupeEdit||drag);
+  if(!show){ if(!lp.hidden) lp.hidden=true; return; }
+  const D=168, dpr=window.devicePixelRatio||1; if(lp.width!==Math.round(D*dpr)){ lp.width=lp.height=Math.round(D*dpr); }
+  lp.hidden=false;
+  const c=lp.getContext('2d'), sw=D/S.loupeZoom*px;
+  c.fillStyle='#000'; c.fillRect(0,0,lp.width,lp.height); c.imageSmoothingEnabled=false;
+  c.drawImage(cv,mouse.x-sw/2,mouse.y-sw/2,sw,sw,0,0,lp.width,lp.height);
+  const m=lp.width/2; c.strokeStyle=cls(st.active).color; c.lineWidth=dpr; c.beginPath(); c.moveTo(m,m-14*dpr); c.lineTo(m,m+14*dpr); c.moveTo(m-14*dpr,m); c.lineTo(m+14*dpr,m); c.stroke();
+  const vp=$('#viewport').getBoundingClientRect(); let x=mouseCss.x+28, y=mouseCss.y-D-28;
+  if(y<6) y=mouseCss.y+28; if(x+D>vp.width-6) x=mouseCss.x-D-28;
+  lp.style.transform=`translate(${x}px,${y}px)`;
+}
+function toggleLoupe(){ S.loupe=!S.loupe; $('#bLoupe').classList.toggle('on',S.loupe); toast(S.loupe?(S.loupeEdit?'Лупа включена: появится при рисовании и правке':'Лупа включена'):'Лупа выключена'); render(); }
 const H_NAMES=['nw','n','ne','e','se','s','sw','w'];
 const handles=b=>[[b.x,b.y],[b.x+b.w/2,b.y],[b.x+b.w,b.y],[b.x+b.w,b.y+b.h/2],[b.x+b.w,b.y+b.h],[b.x+b.w/2,b.y+b.h],[b.x,b.y+b.h],[b.x,b.y+b.h/2]];
 function hitHandle(b,p){ const r=8*px; const hs=handles(b); for(let i=0;i<8;i++) if(Math.abs(p.x-hs[i][0])<r&&Math.abs(p.y-hs[i][1])<r) return H_NAMES[i]; return null; }
@@ -651,7 +706,7 @@ cv.addEventListener('pointerdown',e=>{
   drag={type:'draw',x0:p.x,y0:p.y,x1:p.x,y1:p.y};
 });
 cv.addEventListener('pointermove',e=>{
-  const p=toC(e); mouse=p;
+  const p=toC(e); mouse=p; const vr=$('#viewport').getBoundingClientRect(); mouseCss={x:e.clientX-vr.left,y:e.clientY-vr.top};
   if(!drag){
     const sel=selObj(); let cur='crosshair'; hoverTarget=null;
     const b=sel&&!sel.locked&&!sel.hidden&&visBox(sel); const h=b&&hitHandle(b,p);
@@ -676,7 +731,7 @@ cv.addEventListener('pointerup',()=>{
     if(r.w>=6*px&&r.h>=6*px){ pushUndo(); const o=newObject(st.active,[{f:st.frame,...r,out:false}]); st.sel=o.id; changed(); toast(`Создан «${name(o)}» · ключ на кадре ${st.frame}`); }
     else if(st.sel){ st.sel=null; changed(); }
     else render();
-  } else if(d.armed){ changed(); }
+  } else if(d.armed){ changed(); } else render();
 });
 cv.addEventListener('pointerleave',()=>{ mouse=null; if(!drag) render(); });
 
@@ -706,7 +761,8 @@ function tick(t){
   last=t; requestAnimationFrame(tick);
 }
 const tc=f=>{const s=Math.floor(f/st.fps);return `${pad(Math.floor(s/60))}:${pad(s%60)}:${pad(f%st.fps)}`;};
-function updTime(){ $('#time').innerHTML=`${tc(st.frame)} <em>/ ${tc(st.total-1)}</em>`; if(document.activeElement!==$('#fIn')) $('#fIn').value=st.frame; $('#fTot').textContent='/ '+(st.total-1); $('#tlFrame').textContent='кадр '+st.frame; }
+let timeEditing=false;
+function updTime(){ if(!timeEditing) $('#time').innerHTML=`${tc(st.frame)} <em>/ ${tc(st.total-1)}</em>`; if(document.activeElement!==$('#fIn')) $('#fIn').value=st.frame; $('#fTot').textContent='/ '+(st.total-1); $('#tlFrame').textContent='кадр '+st.frame; }
 function keyFrames(){ const o=selObj(); const s=new Set(); (o?[o]:st.objects).forEach(x=>x.keys.forEach(k=>s.add(k.f))); return [...s].sort((a,b)=>a-b); }
 function jumpKey(dir){ const ks=keyFrames(); const f=dir<0?ks.filter(k=>k<st.frame).pop():ks.find(k=>k>st.frame); if(f!=null){ if(st.playing)pause(); setFrame(f);} else toast(dir<0?'Это первый ключ':'Дальше ключей нет'); }
 
@@ -737,6 +793,15 @@ function toggleOut(o,f=st.frame){
   }
   sortKeys(o); changed();
 }
+function setReview(o,v){ if(!o) return; pushUndo(); o.review=o.review===v?undefined:v; changed(); toast(o.review==='ok'?`«${name(o)}» принят`:o.review==='bad'?`«${name(o)}» отклонён`:'Отметка проверки снята'); }
+function nextUnreviewed(){
+  const n=st.objects.length, cur=st.objects.findIndex(o=>o.id===st.sel); let o=null;
+  for(let j=1;j<=n;j++){ const c=st.objects[(cur+j+n)%n]; if(c.review!=='ok'&&c.id!==st.sel){ o=c; break; } }
+  if(!o){ changed(); toast(st.objects.some(x=>x.review!=='ok')?'Других непроверенных треков нет':'Все треки приняты'); return; }
+  st.sel=o.id; collapsed.delete(o.cls);
+  if(!visBox(o)){ const k=o.keys.find(k=>!k.out); if(k){ if(st.playing) pause(); setFrame(k.f); } }
+  changed();
+}
 function deleteObj(o){ if(!o) return; pushUndo(); st.objects=st.objects.filter(x=>x!==o); if(st.sel===o.id) st.sel=null; changed(); toast(`«${name(o)}» удалён`); }
 function setClass(o,c){ if(o.cls===c) return; pushUndo(); st.counters[c]=(st.counters[c]||0)+1; o.cls=c; o.num=st.counters[c]; changed(); }
 function setActive(c){ st.active=c; renderChips(); renderPanel(); renderOvl(); }
@@ -754,7 +819,7 @@ function renderOvl(){
   const o=selObj(), a=cls(st.active);
   const pick=cl=>`<button class="${cl} pick" id="pickBtn" aria-haspopup="listbox" title="Тип для новой рамки (1–9)"><span class="lb">Новая рамка</span><i style="background:${a.color}"></i>${a.name}${a.hk?`<kbd>${a.hk}</kbd>`:''}${ic('chev',12).replace('<svg','<svg style="transform:rotate(90deg)"')}</button>`;
   let h=VER===2 ? pick('pill') : VER===1 ? `<span class="pill"><i style="background:${a.color}"></i>Рисую: ${a.name}</span>` : '';
-  if(VER===3){ const b=pick('kb'); const bar=$('#v3bar'); if(bar.dataset.h!==b){ bar.innerHTML=b; bar.dataset.h=b; } }
+  if(VER>=3){ const b=pick('kb'); const bar=$('#v3bar'); if(bar.dataset.h!==b){ bar.innerHTML=b; bar.dataset.h=b; } }
   if(o){ const s=status(o); const lab={key:'ключ',interp:'интерполяция',out:'вне кадра',outkey:'вне кадра · ключ',none:'ещё не появился'}[s];
     h+=`<span class="pill ${s==='key'?'key':''}">${name(o)} · ${lab}</span>`; }
   if(h!==lastOvl){ $('#ovl').innerHTML=h; lastOvl=h; }
@@ -777,16 +842,16 @@ function openPicker(anchor){
 /* ───────────────────────── UI: panel ───────────────────────── */
 const ST_LABEL={key:['key','◆ ключ'],interp:['interp','интерп.'],out:['out','вне кадра'],outkey:['out','◇ вне'],none:['none','—']};
 function renderPanel(){
-  $('#objCount').textContent=st.objects.length;
+  $('#objCount').textContent=VER>=4?`${st.objects.length} · не проверено ${st.objects.filter(o=>o.review!=='ok').length}`:st.objects.length;
   const L=$('#olist');
   const v2=VER>=2, q=v2?oq.trim().toLowerCase():'';
   $('#osearchWrap').hidden=!(v2&&st.objects.length>6);
-  if(!st.objects.length){ L.innerHTML=`<div class="empty">Объектов пока нет. ${VER===2?'Выберите тип в «Новая рамка» на кадре':VER===3?'Выберите тип в «Новая рамка» над видео':'Выберите тип сверху'} и обведите объект — появится трек с первым ключом.</div>`; }
+  if(!st.objects.length){ L.innerHTML=`<div class="empty">Объектов пока нет. ${VER===2?'Выберите тип в «Новая рамка» на кадре':VER>=3?'Выберите тип в «Новая рамка» над видео':'Выберите тип сверху'} и обведите объект — появится трек с первым ключом.</div>`; }
   else { L.innerHTML=CLASSES.map(c=>{
     const os=st.objects.filter(o=>o.cls===c.id&&(!q||name(o).toLowerCase().includes(q))); if(!os.length) return '';
     if(v2){
       const col=collapsed.has(c.id)&&!q&&!os.some(o=>o.id===st.sel);
-      const head=`<div class="grp ${col?'col':''}" data-g="${c.id}" role="button" aria-expanded="${!col}"><span class="chv">${ic('chev',12).replace('<svg','<svg style="transform:rotate(90deg)"')}</span><i style="background:${c.color}"></i>${c.name}<span class="mono" style="font-weight:500">${os.length}</span><span class="sp"></span>${st.active===c.id?'<span class="drw">рисую</span>':`<button class="add" data-c="${c.id}" title="Рисовать новую рамку этого типа">${ic('plus',14)}</button>`}</div>`;
+      const head=`<div class="grp ${col?'col':''}" data-g="${c.id}" role="button" aria-expanded="${!col}"><span class="chv">${ic('chev',12).replace('<svg','<svg style="transform:rotate(90deg)"')}</span><i style="background:${c.color}"></i>${c.name}<span class="mono" style="font-weight:500">${os.length}</span><span class="sp"></span>${VER>=4?(()=>{ const all=st.objects.filter(o=>o.cls===c.id), off=all.every(o=>o.hidden); return `<button class="geye ${off?'off':''}" data-ge="${c.id}" title="${off?'Показать':'Скрыть'} все «${c.name}» на кадре и таймлайне">${ic(off?'eyeOff':'eye',14)}</button>`; })():''}${st.active===c.id?'<span class="drw">рисую</span>':`<button class="add" data-c="${c.id}" title="Рисовать новую рамку этого типа">${ic('plus',14)}</button>`}</div>`;
       if(col) return head;
       return head+os.map(rowHtml).join('');
     }
@@ -794,6 +859,8 @@ function renderPanel(){
       os.map(rowHtml).join('');
   }).join('') || `<div class="empty">Ничего не нашлось по «${oq.replace(/</g,'&lt;')}»</div>`; }
   function rowHtml(o){ const c=cls(o.cls); const [k,l]=ST_LABEL[status(o)];
+    if(VER>=4){ const rv=o.review;
+      return `<div class="orow ${st.sel===o.id?'sel':''} ${o.hidden?'off':''}" data-id="${o.id}"><span class="sw" style="background:${c.color}"></span><span class="nm">${name(o)}</span>${o.locked?`<span class="oflag" title="Заблокирован">${ic('lock',13)}</span>`:''}${o.hidden?`<span class="oflag" title="Скрыт">${ic('eyeOff',13)}</span>`:''}<span class="st ${k}">${l}</span><span class="rv ${rv||'todo'}" title="${rv==='ok'?'Принят':rv==='bad'?'Отклонён':'Не проверен'}">${rv==='ok'?ic('check',11):rv==='bad'?ic('x',11):''}</span></div>`; }
         return `<div class="orow ${st.sel===o.id?'sel':''} ${o.hidden?'off':''}" data-id="${o.id}">
           <span class="sw" style="background:${c.color}"></span><span class="nm">${name(o)}</span>
           <span class="st ${k}">${l}</span>
@@ -818,6 +885,7 @@ function renderPanel(){
     </div>
     <div class="sec-l">Ключевые кадры<span class="count">${o.keys.length}</span><span class="sp"></span><span style="text-transform:none;letter-spacing:0;font-weight:500" class="mono">кадр ${st.frame}</span></div>
     <div class="kfs" style="--c:${c.color}">${o.keys.map(k=>`<span class="kf ${k.f===st.frame?'cur':''} ${k.out?'out':''}"><button class="go" data-f="${k.f}" title="${k.out?'Вне кадра с ':'Перейти к '}${k.f}">${k.f}</button><button class="mm" data-m="${k.f}" aria-label="Действия с ключом ${k.f}">${ic('more',12)}</button></span>`).join('')}</div>
+    ${VER>=4?`<div class="sec-l">Проверка трека</div><div class="review"><button id="rOk" class="ok ${o.review==='ok'?'on':''}" title="Принять трек (A — принять и к следующему)">${ic('check',14)}Принять</button><button id="rBad" class="bad ${o.review==='bad'?'on':''}" title="Отклонить трек (X)">${ic('x',14)}Отклонить</button><button id="rNext" title="Следующий непроверенный (N)">${ic('keyNext',14)}</button></div>`:''}
     ${VER===1?`<div class="sec-l">Рамка на кадре<span class="sp"></span><span style="text-transform:none;letter-spacing:0;font-weight:500">${{key:'задана вручную',interp:'интерполирована',out:'объект вне кадра',outkey:'объект вне кадра',none:'объект ещё не появился'}[s]}</span></div>
     <div class="coords">${['x','y','w','h'].map(a=>`<label>${a.toUpperCase()}<input id="c${a}" class="mono" inputmode="numeric" ${(!b||b.out||o.locked)?'disabled':''}></label>`).join('')}</div>
     <div class="note">${s==='interp'?'Рамка посчитана между соседними ключами. Если она отстала от объекта — подвиньте её, и здесь появится ключ.':s==='key'?'Изменения рамки сохраняются в этот ключ.':isOut?'Объект скрыт до следующего видимого ключа. «Вернуть» — показать его снова с этого кадра.':'Первый ключ объекта на кадре '+o.keys[0].f+'.'}${o.locked?' <b>Объект заблокирован.</b>':''}</div>`:''}`;
@@ -826,6 +894,7 @@ function renderPanel(){
 function fillCoords(){ const o=selObj(); if(!o) return; const b=boxAt(o,st.frame); ['x','y','w','h'].forEach(a=>{ const el=$('#c'+a); if(el&&document.activeElement!==el) el.value=b?Math.round(b[a]):''; }); }
 
 $('#olist').addEventListener('click',e=>{
+  const ge=e.target.closest('.geye'); if(ge){ const os=st.objects.filter(o=>o.cls===ge.dataset.ge); const h=!os.every(o=>o.hidden); os.forEach(o=>o.hidden=h); changed(); return; }
   const add=e.target.closest('.add'); if(add){ setActive(add.dataset.c); toast(`Новая рамка: ${cls(add.dataset.c).name}`); return; }
   const g=e.target.closest('.grp');
   if(g&&g.dataset.g){ const id=g.dataset.g; collapsed.has(id)?collapsed.delete(id):collapsed.add(id); renderPanel(); return; }
@@ -842,6 +911,7 @@ $('#olist').addEventListener('dblclick',e=>{ const r=e.target.closest('.orow'); 
 $('#det').addEventListener('click',e=>{
   const o=selObj(); if(!o) return; const t=e.target.closest('button'); if(!t) return;
   if(t.id==='bDel') deleteObj(o); else if(t.id==='dPrev') jumpKey(-1); else if(t.id==='dNext') jumpKey(1);
+  else if(t.id==='rOk') setReview(o,'ok'); else if(t.id==='rBad') setReview(o,'bad'); else if(t.id==='rNext') nextUnreviewed();
   else if(t.id==='dKey') toggleKey(o); else if(t.id==='dOut') toggleOut(o);
   else if(t.dataset.f){ if(st.playing)pause(); setFrame(+t.dataset.f); }
   else if(t.dataset.m){ const f=+t.dataset.m, k=o.keys[keyIdx(o,f)];
@@ -873,13 +943,14 @@ function renderLanes(){
     o.keys.forEach((k,i)=>{ if(k.out) return; const n=o.keys[i+1]; const end=n?n.f:st.total-1; const hold=!n||n.out;
       segs+=`<div class="seg ${hold?'hold':''}" style="left:${pct(k.f)}%;width:${pct(end)-pct(k.f)}%;background:${c}"></div>`; });
     const dots=o.keys.map(k=>`<div class="dot ${k.out?'out':''} ${k.f===st.frame?'cur':''}" data-o="${o.id}" data-f="${k.f}" style="left:${pct(k.f)}%;background:${c};color:${c}" title="${name(o)} · ${k.out?'вне кадра с ':'ключ '}${k.f}"></div>`).join('');
-    return `<div class="tl-row lane ${st.sel===o.id?'sel':''} ${o.hidden?'dim':''}" data-id="${o.id}"><div class="tl-label"><i style="background:${c}"></i>${name(o)}</div><div class="track">${segs}${dots}</div></div>`;
+    return `<div class="tl-row lane ${st.sel===o.id?'sel':''} ${o.hidden?'dim':''}" data-id="${o.id}"><div class="tl-label"><i style="background:${c}"></i>${VER>=4?`<span class="ln">${name(o)}</span><span class="la"><button data-act="eye" class="${o.hidden?'on':''}" title="${o.hidden?'Показать':'Скрыть'} на кадре">${ic(o.hidden?'eyeOff':'eye',14)}</button><button data-act="lock" class="${o.locked?'on':''}" title="${o.locked?'Разблокировать':'Заблокировать'}">${ic(o.locked?'lock':'unlock',14)}</button></span>`:name(o)}</div><div class="track">${segs}${dots}</div></div>`;
   }).join('');
   updPlayhead();
 }
 function updPlayhead(){ $('#ph').style.setProperty('--p',pct(st.frame)/100); }
 let scrub=null;
 $('#tl').addEventListener('pointerdown',e=>{
+  const act=e.target.closest('.lane [data-act]'); if(act){ const o=st.objects.find(x=>x.id==act.closest('.lane').dataset.id); if(act.dataset.act==='eye') o.hidden=!o.hidden; else o.locked=!o.locked; changed(); return; }
   const lab=e.target.closest('.lane .tl-label'); if(lab){ st.sel=+lab.parentNode.dataset.id; changed(); return; }
   const track=e.target.closest('.track'); if(!track) return; closePops();
   if(st.playing) pause();
@@ -916,13 +987,13 @@ function renderSettings(){
   const sl=(id,l,min,max,unit='')=>`<div class="srow"><label for="s_${id}">${l}</label><output id="o_${id}">${S[id]}${unit}</output><input type="range" id="s_${id}" min="${min}" max="${max}" value="${S[id]}" data-u="${unit}"></div>`;
   const tg=(id,l)=>`<label class="tg" for="s_${id}">${l}<input type="checkbox" id="s_${id}" ${S[id]?'checked':''}></label>`;
   $('#settings').innerHTML=`<h3>Разметка</h3>${sl('stroke','Толщина рамки',1,5,'px')}${sl('fill','Заливка рамки',0,60,'%')}${sl('labelSize','Размер подписи',9,18,'px')}
-    ${tg('labels','Подписи объектов')}${tg('dash','Пунктир на интерполированных кадрах')}${tg('cross','Перекрестие курсора')}
+    ${tg('labels','Подписи объектов')}${VER>=4?`${tg('loupe','Лупа')}${tg('loupeEdit','Лупа только при рисовании и правке')}${sl('loupeZoom','Увеличение лупы',2,6,'×')}`:''}${tg('dash','Пунктир на интерполированных кадрах')}${tg('cross','Перекрестие курсора')}
     <div class="div"></div><h3>Видео</h3>
     ${VER>=2?`<div class="srow"><span>Скорость воспроизведения</span><output>${st.speed}×</output></div><div class="speedseg" role="group" aria-label="Скорость">${[0.25,0.5,1,2].map(v=>`<button data-sp="${v}" class="${st.speed===v?'on':''}">${v}×</button>`).join('')}</div>`:''}
     ${sl('brightness','Яркость',40,180,'%')}${sl('contrast','Контраст',40,180,'%')}
     <button class="btn ghost" id="sReset" style="justify-content:center">Сбросить настройки</button>`;
 }
-$('#settings').addEventListener('input',e=>{ const id=e.target.id.slice(2); if(!(id in S)) return; S[id]=e.target.type==='checkbox'?e.target.checked:+e.target.value; const o=$('#o_'+id); if(o) o.textContent=S[id]+e.target.dataset.u; render(); });
+$('#settings').addEventListener('input',e=>{ const id=e.target.id.slice(2); if(!(id in S)) return; S[id]=e.target.type==='checkbox'?e.target.checked:+e.target.value; const o=$('#o_'+id); if(o) o.textContent=S[id]+e.target.dataset.u; $('#bLoupe').classList.toggle('on',S.loupe); render(); });
 $('#settings').addEventListener('click',e=>{
   const sp=e.target.closest('[data-sp]'); if(sp){ setSpeed(+sp.dataset.sp); renderSettings(); return; }
   if(e.target.id==='sReset'){ Object.assign(S,DEF_SETTINGS); renderSettings(); render(); } });
@@ -933,6 +1004,18 @@ $('#bKeys').addEventListener('click',()=>{ const p=$('#keys'); if(!p.hidden){clo
 let tt; function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),1800); }
 function changed(){ renderChips(); renderPanel(); render(); }
 $('#bPlay').onclick=togglePlay;
+$('#time').addEventListener('click',()=>{
+  if(VER<4||timeEditing) return; if(st.playing) pause(); timeEditing=true;
+  const t=$('#time'); t.innerHTML=`<input id="tIn" class="mono" value="${st.frame}" aria-label="Кадр или таймкод мм:сс:кк" title="Номер кадра или таймкод мм:сс:кк">`;
+  const i=$('#tIn'); i.focus(); i.select(); let fin=false;
+  const done=go=>{ if(fin) return; fin=true; timeEditing=false;
+    if(go){ const v=i.value.trim(); let f=NaN;
+      if(v.includes(':')){ const p=v.split(':').map(Number); while(p.length<3) p.unshift(0); if(!p.some(isNaN)) f=(p[0]*60+p[1])*st.fps+p[2]; } else f=parseInt(v);
+      if(!isNaN(f)) setFrame(f); else toast('Введите номер кадра или таймкод мм:сс:кк'); }
+    updTime(); };
+  i.onkeydown=e=>{ e.stopPropagation(); if(e.key==='Enter') done(true); else if(e.key==='Escape') done(false); };
+  i.onblur=()=>done(true);
+});
 $('#bPrev').onclick=()=>{ if(st.playing)pause(); setFrame(st.frame-1); };
 $('#bNext').onclick=()=>{ if(st.playing)pause(); setFrame(st.frame+1); };
 $('#bKeyPrev').onclick=()=>jumpKey(-1); $('#bKeyNext').onclick=()=>jumpKey(1);
@@ -961,12 +1044,13 @@ function setVersion(v){
   try{ localStorage.setItem('lx-proto-ver',v); }catch(e){}
   try{ history.replaceState(null,'','#v'+v); }catch(e){}
   $('#hkDigits').innerHTML=v===1?'<span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span>':'<span class="kbd">1</span>–<span class="kbd">9</span>';
+  $('#time').classList.toggle('timebtn',v>=4); $('#time').title=v>=4?'Перейти к кадру или таймкоду':''; $('#bLoupe').classList.toggle('on',S.loupe);
   closePops(); lastOvl=''; renderVers(); resetDemo(96);
 }
 function exportJSON(){
   return JSON.stringify({video:{source:st.source==='demo'?'demo-cam03':'upload',frames:st.total,fps:st.fps,width:W,height:H},
     labels:CLASSES.map(c=>({id:c.id,name:c.name,color:c.color})),
-    tracks:st.objects.map(o=>({id:o.id,label:o.cls,name:name(o),keyframes:o.keys.map(k=>({frame:k.f,bbox:[k.x,k.y,k.w,k.h].map(Math.round),outside:k.out}))}))},null,2);
+    tracks:st.objects.map(o=>({id:o.id,label:o.cls,name:name(o),...(VER>=4?{review:o.review||null}:{}),keyframes:o.keys.map(k=>({frame:k.f,bbox:[k.x,k.y,k.w,k.h].map(Math.round),outside:k.out}))}))},null,2);
 }
 $('#btnJson').onclick=()=>{
   const bgd=document.createElement('div'); bgd.className='modal-bg';
@@ -979,7 +1063,7 @@ $('#btnSave').onclick=()=>toast('Макет: разметка хранится �
 $('#btnSubmit').onclick=()=>toast('Макет: отправка задания не подключена');
 
 document.addEventListener('keydown',e=>{
-  if(e.target.matches('input,select,textarea')) { if(e.key==='Escape') e.target.blur(); return; }
+  if(e.target.matches?.('input,select,textarea')) { if(e.key==='Escape') e.target.blur(); return; }
   const k=e.key, o=selObj(), mod=e.metaKey||e.ctrlKey;
   if(mod&&(k==='z'||k==='Z')){ e.preventDefault(); e.shiftKey?doRedo():doUndo(); return; }
   if(mod&&k==='y'){ e.preventDefault(); doRedo(); return; }
@@ -990,6 +1074,10 @@ document.addEventListener('keydown',e=>{
   else if(k==='e'||k==='E'||k==='у'||k==='У') jumpKey(1);
   else if((k==='k'||k==='K'||k==='л'||k==='Л')&&o) toggleKey(o);
   else if((k==='h'||k==='H'||k==='р'||k==='Р')&&o) toggleOut(o);
+  else if((k==='a'||k==='A'||k==='ф'||k==='Ф')&&o&&VER>=4){ if(o.review!=='ok'){ pushUndo(); o.review='ok'; toast(`«${name(o)}» принят`); } nextUnreviewed(); }
+  else if((k==='x'||k==='X'||k==='ч'||k==='Ч')&&o&&VER>=4) setReview(o,'bad');
+  else if((k==='n'||k==='N'||k==='т'||k==='Т')&&VER>=4) nextUnreviewed();
+  else if((k==='l'||k==='L'||k==='д'||k==='Д')&&VER>=4) toggleLoupe();
   else if(/^[1-9]$/.test(k)&&+k<=CLASSES.length) setActive(CLASSES[+k-1].id);
   else if((k==='Delete'||k==='Backspace')&&o){ e.preventDefault(); deleteObj(o); }
   else if(k==='Escape'){ if(drag){drag=null;render();} else { closePops(); st.sel=null; changed(); } }
