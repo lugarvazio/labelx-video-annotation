@@ -295,9 +295,29 @@ input,select{font:inherit;color:inherit}
 
 [data-ver="1"] .v3up,[data-ver="2"] .v3up{display:none!important}
 [data-ver="1"] .v4only,[data-ver="2"] .v4only,[data-ver="3"] .v4only,:root:not([data-ver="4"]) .rv4only{display:none!important}
-[data-ver="4"],[data-ver="5"],[data-ver="6"]{--lw:196px}
+[data-ver="4"],[data-ver="5"],[data-ver="6"],[data-ver="7"]{--lw:196px}
 /* V5: rows indented so object names line up with the group name */
-[data-ver="5"] .orow,[data-ver="6"] .orow{padding-left:24px}
+[data-ver="5"] .orow,[data-ver="6"] .orow,[data-ver="7"] .orow{padding-left:24px}
+/* V7: video-player style scrubber above the controls, keys sit on the bar */
+:root:not([data-ver="7"]) .v7only{display:none!important}
+.vbar{position:relative;padding:16px 16px 6px;background:var(--stage-2);border-top:1px solid var(--stage-line);touch-action:none;cursor:pointer;user-select:none}
+.vb-track{position:relative;height:4px;border-radius:3px;background:rgba(255,255,255,.16);transition:height .12s}
+.vbar:hover .vb-track,.vbar.drag .vb-track{height:6px}
+.vb-fill{position:absolute;left:0;top:0;bottom:0;width:calc(var(--p,0) * 100%);background:#8590FF;border-radius:inherit}
+.vb-thumb{position:absolute;top:50%;left:calc(var(--p,0) * 100%);width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#8590FF;box-shadow:0 0 0 3px rgba(133,144,255,.28);z-index:3}
+.vb-band{position:absolute;left:0;right:0;bottom:calc(100% + 5px);height:3px}
+.vb-band i{position:absolute;top:0;bottom:0;border-radius:2px}
+.vb-band i.hold{opacity:.4}
+.vb-keys{position:absolute;inset:0;z-index:2}
+.vb-keys b{position:absolute;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;transform:rotate(45deg);border-radius:1.5px;box-shadow:0 0 0 1.5px var(--stage-2)}
+.vb-keys b.out{background:var(--stage-2)!important;box-shadow:inset 0 0 0 1.5px currentColor,0 0 0 1.5px var(--stage-2)}
+.vb-keys.all b{opacity:.6;width:7px;height:7px;margin:-3.5px 0 0 -3.5px}
+.vb-tip{position:absolute;bottom:calc(100% - 4px);transform:translateX(-50%);background:rgba(10,11,16,.94);color:#E9EAF2;font:500 11px var(--f-mono);padding:4px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:4}
+:root[data-ver="7"] .player{display:flex;gap:6px;padding:4px 12px 8px;border-top:0}
+:root[data-ver="7"] .pl-c{order:0}
+:root[data-ver="7"] .pl-l{order:1}
+:root[data-ver="7"] .pl-r{order:2;margin-left:auto}
+:root[data-ver="7"] .pb.play{width:32px;height:32px;margin:0 2px}
 /* V6: collapsed timeline — one thin scrub strip with playhead, progress and key marks */
 .tl.mini{--lw:0px}
 .tl.mini .lanes,.tl.mini .tl-ruler .tl-label,.tl.mini .tick span{display:none}
@@ -348,7 +368,7 @@ input,select{font:inherit;color:inherit}
   .panel{max-height:none}
   .olist{max-height:none}
   :root{--lw:96px}
-  [data-ver="4"],[data-ver="5"],[data-ver="6"]{--lw:150px}
+  [data-ver="4"],[data-ver="5"],[data-ver="6"],[data-ver="7"]{--lw:150px}
   :root:not([data-ver="1"]) .player{grid-template-columns:1fr auto}
   :root:not([data-ver="1"]) .pl-c{grid-column:1/-1;justify-self:center;order:-1}
 }
@@ -389,6 +409,10 @@ input,select{font:inherit;color:inherit}
             <canvas id="cv" aria-label="Кадр видео с разметкой"></canvas>
             <div class="ovl" id="ovl"></div>
             <canvas class="loupe" id="loupe" hidden></canvas>
+          </div>
+          <div class="vbar v7only" id="vbar" aria-label="Шкала видео: перемотка и ключи">
+            <div class="vb-track"><div class="vb-band" id="vbBand"></div><div class="vb-fill"></div><div class="vb-keys" id="vbKeys"></div><div class="vb-thumb"></div></div>
+            <div class="vb-tip" id="vbTip" hidden></div>
           </div>
           <div class="player">
             <div class="pl-c">
@@ -522,6 +546,7 @@ const CLASSES_V2=[
 ].map(([id,name,color],i)=>({id,name,color,hk:i<9?String(i+1):''}));
 let CLASSES=CLASSES_V2;
 const VERSIONS=[
+  {v:7,date:'21.10',title:'Шкала как в плеере',notes:['Над кнопками — шкала видео: пройденная часть, бегунок, утолщение при наведении','Ключи выбранного объекта — ромбами на шкале, над ней полоска его присутствия в кадре','Подсказка при наведении: время и кадр, у ромба — номер ключа; клик рядом с ромбом прилипает к ключу','Кнопка таймлайна прячет треки целиком, шкала остаётся']},
   {v:6,date:'20.10',title:'Свёрнутый таймлайн',notes:['Кнопка таймлайна сворачивает треки в тонкую полосу, а не прячет его','В полосе: перемотка, пройденная часть, ключи выбранного объекта (или всех, если ничего не выбрано)']},
   {v:5,date:'20.10',title:'Слои без проверки',notes:['Новый объект — верхней строкой на таймлайне и первым в своей группе','Проверка треков убрана: это задача верификатора','Объекты в группе выровнены по названию группы']},
   {v:4,date:'20.10',title:'Скорость и проверка',notes:['Тип новой рамки виден у курсора, перекрестие в цвете класса','Лупа при рисовании и правке рамки (L)','Проверка треков: принять, отклонить, следующий непроверенный','Клик по таймкоду — переход к кадру','Глаз и замок — у названия трека на таймлайне, глаз у группы — фильтр класса']},
@@ -952,8 +977,17 @@ function renderRuler(){
   let h=''; for(let s=0;s<=secs;s+=step){ h+=`<div class="tick big" style="left:${pct(s*st.fps)}%"><span>${s<60?s+'с':Math.floor(s/60)+'м'+(s%60?pad(s%60):'')}</span></div>`; for(let q=1;q<5;q++){ const f=(s+step*q/5)*st.fps; if(f<st.total) h+=`<div class="tick" style="left:${pct(f)}%"></div>`; } }
   $('#ruler').innerHTML=h+'<div class="mks" id="mks"></div>'; renderMini();
 }
+function segHtml(o){ const c=cls(o.cls).color; let h='';
+  o.keys.forEach((k,i)=>{ if(k.out) return; const n=o.keys[i+1]; const end=n?n.f:st.total-1; h+=`<i class="${!n||n.out?'hold':''}" style="left:${pct(k.f)}%;width:${pct(end)-pct(k.f)}%;background:${c}"></i>`; });
+  return h; }
+function renderVbar(){
+  if(VER<7) return; const o=selObj(), list=o?[o]:st.objects.filter(x=>!x.hidden), K=$('#vbKeys');
+  K.classList.toggle('all',!o);
+  K.innerHTML=list.map(x=>{ const c=cls(x.cls).color; return x.keys.map(k=>`<b class="${k.out?'out':''}" style="left:${pct(k.f)}%;background:${c};color:${c}"></b>`).join(''); }).join('');
+  $('#vbBand').innerHTML=o?segHtml(o):'';
+}
 function renderLanes(){
-  renderMini();
+  renderMini(); renderVbar();
   const L=$('#lanes');
   if(!st.objects.length){ L.innerHTML=`<div class="lane-empty">Треки объектов появятся здесь</div>`; updPlayhead(); return; }
   L.innerHTML=(VER>=5?[...st.objects].reverse():st.objects).map(o=>{
@@ -965,7 +999,7 @@ function renderLanes(){
   }).join('');
   updPlayhead();
 }
-function updPlayhead(){ $('#tl').style.setProperty('--p',pct(st.frame)/100); }
+function updPlayhead(){ document.querySelector('.viewer').style.setProperty('--p',pct(st.frame)/100); }
 function renderMini(){
   const m=$('#mks'); if(!m) return; if(VER<6){ m.innerHTML=''; return; }
   const o=selObj(), list=o?[o]:st.objects.filter(x=>!x.hidden);
@@ -991,6 +1025,28 @@ $('#tl').addEventListener('pointermove',e=>{
   else setFrame(f);
 });
 $('#tl').addEventListener('pointerup',()=>{ if(scrub&&scrub.moved){ changed(); toast(`Ключ перенесён на кадр ${scrub.k.f}`);} scrub=null; });
+
+/* ───────────────────────── V7 scrubber ───────────────────────── */
+const vbar=$('#vbar'); let vbDrag=false;
+const vbM=e=>{ const r=vbar.querySelector('.vb-track').getBoundingClientRect(); const x=clamp(e.clientX-r.left,0,r.width); return {f:Math.round(x/r.width*(st.total-1)),x,w:r.width,left:r.left}; };
+function snapKey(f,w){ const tol=7/w*(st.total-1); let best=null; for(const k of keyFrames()) if(Math.abs(k-f)<=tol&&(best==null||Math.abs(k-f)<Math.abs(best-f))) best=k; return best; }
+function vbTip(e){
+  const m=vbM(e), s=snapKey(m.f,m.w), T=$('#vbTip'), f=s??m.f;
+  let txt=`${tc(f)} · кадр ${f}`;
+  if(s!=null){ const o=selObj(); const own=(o?[o]:st.objects).filter(x=>x.keys.some(k=>k.f===s)); txt=`◆ ключ ${s}`+(own.length?` · ${own.slice(0,2).map(name).join(', ')}${own.length>2?' +'+(own.length-2):''}`:''); }
+  T.textContent=txt; T.hidden=false;
+  const vr=vbar.getBoundingClientRect(), x=m.left-vr.left+(s!=null?s/(st.total-1)*m.w:m.x);
+  T.style.left=clamp(x,T.offsetWidth/2+4,vr.width-T.offsetWidth/2-4)+'px';
+}
+vbar.addEventListener('pointerdown',e=>{
+  if(VER<7||e.button!==0) return; closePops(); if(st.playing) pause();
+  vbDrag=true; vbar.classList.add('drag'); try{ vbar.setPointerCapture(e.pointerId); }catch(_){}
+  const m=vbM(e), s=snapKey(m.f,m.w); setFrame(s??m.f); vbTip(e);
+});
+vbar.addEventListener('pointermove',e=>{ if(VER<7) return; if(vbDrag) setFrame(vbM(e).f); vbTip(e); });
+const vbEnd=()=>{ vbDrag=false; vbar.classList.remove('drag'); };
+vbar.addEventListener('pointerup',vbEnd); vbar.addEventListener('pointercancel',vbEnd);
+vbar.addEventListener('pointerleave',()=>{ if(!vbDrag) $('#vbTip').hidden=true; });
 
 /* ───────────────────────── popovers ───────────────────────── */
 function place(pop,anchor,prefer='below'){
@@ -1049,7 +1105,7 @@ function setSpeed(v){ st.speed=v; $('#speed').value=String(v); if(st.source==='v
 $('#speed').onchange=e=>setSpeed(+e.target.value);
 $('#fIn').addEventListener('change',e=>{ const v=parseInt(e.target.value); if(!isNaN(v)){ if(st.playing)pause(); setFrame(v);} e.target.blur(); });
 $('#bTl').onclick=()=>{ st.showTl=!st.showTl; applyTl(); };
-function applyTl(){ const mini=VER>=6&&!st.showTl; $('#tl').classList.toggle('mini',mini); $('#tl').hidden=!st.showTl&&!mini; $('#bTl').classList.toggle('on',st.showTl); $('#bTl').title=VER>=6?(st.showTl?'Свернуть таймлайн':'Развернуть таймлайн'):'Таймлайн треков'; renderMini(); }
+function applyTl(){ const mini=VER===6&&!st.showTl; $('#tl').classList.toggle('mini',mini); $('#tl').hidden=!st.showTl&&!mini; $('#bTl').classList.toggle('on',st.showTl); $('#bTl').title=VER===7?(st.showTl?'Скрыть треки':'Показать треки'):VER>=6?(st.showTl?'Свернуть таймлайн':'Развернуть таймлайн'):'Таймлайн треков'; renderMini(); }
 $('#bUpload').onclick=()=>$('#file').click();
 $('#file').addEventListener('change',e=>{
   const f=e.target.files[0]; if(!f) return; pause();
